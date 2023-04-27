@@ -1,0 +1,211 @@
+#======================================================================================================================#
+# 自定義參數
+#======================================================================================================================#
+solaris:
+  #====================================================================================================================#
+  # 自定義：Server Connection Configuration
+  #====================================================================================================================#
+  server:
+    free5gc:
+      http:
+        url: http://60.251.156.214:31112 #free5gc核網
+#        url: http://59.124.112.33:30601
+  free5gc-version: Community # Community | Business 
+  session:
+    host: 60.251.156.214
+#    host: 59.124.112.33
+    username: ubuntu
+#    username: eistack
+    port: 22
+    file_base: /home/ubuntu/UeranAuto/
+#    file_base: /home/eistack/Ueranauto/
+    oam_namespace: 5gc
+#    oam_namespace: oam
+    identity: C:\\id_rsa\\id_rsa_214.ppk
+#    identity: 
+    login-password: P@ssw0rd
+    sudo-password: P@ssw0rd
+  gnb:
+    mcc: '208'
+    mnc: '93'
+    slice: 
+      sst: 1
+      sd: '010203'
+  ue:
+    mcc: '208'
+    mnc: '93'
+    key: 8baf473f2f8fd09487cccbd7097c6862
+    opCode: 8e27b6af0e692e750f32667a3b14605d
+    opType: OP
+    amf: 8000
+    slice:
+      sst: 1
+      sd: '010203'
+    AMBR:
+      up-link: 1 Gbps
+      down-link: 2 Gbps
+    GFBR:
+      up-link: 100 Mbps
+      down-link: 200 Mbps
+    direction : upLink #[upLink/downLink]
+    data: 100 Mbps
+      
+  prometheus:
+    url: http://60.251.156.216:9090
+    namespace: default
+  #====================================================================================================================#
+  # 自定義：Security (JWT Token, Role Hierarchy)
+  #====================================================================================================================#
+  security:
+    jwt-token:
+      tokenHeader: Authorization      # 存放 Token 的 Header Key
+      tokenPrefixString: "Bearer "    # token 的前綴字串
+      authenticatedTokens:
+        ADMIN: eyJhbGciOiJIUzUxMiJ9.eyJ1c2VybmFtZSI6IlVTRVJfQURNSU4iLCJyb2xlIjoiUk9MRV9BRE1JTiIsImlhdCI6MTU1ODg4NjQwMCwiZXhwIjoxODc0MjQ2NDAwfQ.vbkgcdaGE61jJL-Jrf4hMAek4lDyGKtRkmDw0gjuvTvYEPK1rvfZiU0xn5pTYvlCrxPKBAnU2GTmo1EO0tIZiA 
+        Portal: eyJhbGciOiJIUzUxMiJ9.eyJleHAiOjE4MzQxODMwMzksInVzZXJuYW1lIjoic2VjdXJpdHktbWFuYWdlciJ9.bQ0KgJO3yQLwqVOIxVuG3w2AC6VvgjruWFDjvG0oy_IczkJ4DsGXrrta37wztqHh5-qayw4i-Gy5v2X0BTLf9Q
+        LogManager: eyJhbGciOiJIUzUxMiJ9.eyJ1c2VybmFtZSI6IlVTRVJfTG9nTWFuYWdlciIsInJvbGUiOiJST0xFX0xvZ01hbmFnZXIiLCJpYXQiOjE1NTg4ODY0MDAsImV4cCI6MTg3NDI0NjQwMH0.Jy9F6Qhj1O_Ebda0xA6s6Reehn_P0zmYGFRr0yO5VFts-rURHWBLgGn7c9ljon2impj250FDcn9Dhql8a470gQ
+    roleHierarchy:
+      ROLE_ADMIN: ROLE_Portal, ROLE_LogManager, ROLE_Tenant-Manager, ROLE_GUEST      
+      ROLE_Portal: ROLE_GUEST
+#======================================================================================================================#
+# Spring
+#======================================================================================================================#
+spring:
+  application:
+    name: Ueran Automation
+  profiles:
+    active: dev  
+  #====================================================================================================================#
+  # 匯入外部 yaml 檔案
+  #====================================================================================================================#  
+  config:
+    import: config/server.yaml, config/actuator.yaml
+  #====================================================================================================================#
+  # MULTIPART (MultipartProperties) 
+  #====================================================================================================================#  
+  servlet:
+    multipart:
+      enabled: true                 # 是否允許上傳複數文件
+      file-size-threshold: 0B       # 文件寫入磁碟後的預設值。值可以使用後缀“MB”或“KB”
+      location:                     # 上傳文件的中间位置。
+      max-file-size: 15000MB        # 上傳檔案容量最大允許值，可用 MB 或者 KB 表示
+      max-request-size: 15002MB     # 請求容量最大允許值，可用 MB 或者 KB 表示
+      resolve-lazily: false         # 是否在文件或參數訪問時採用惰性處理多部分請求
+  #====================================================================================================================#
+  # i18n   
+  #====================================================================================================================#  
+  messages:
+    basename: i18n/message
+    encoding: UTF-8
+    cache-duration: 3600
+  #====================================================================================================================#
+  # Output   
+  #====================================================================================================================#  
+  output.ansi.enabled: DETECT  # DETECT | ALWAYS
+  #====================================================================================================================#
+  # Pagination default 
+  #====================================================================================================================#  
+  data:
+    web:
+      pageable:
+        default-page-size: 5         # Default page size. (default: 20)
+        max-page-size: 500           # Maximum page size to be accepted. (default: 2000)
+        one-indexed-parameters: true # Whether to expose and assume 1-based page number indexes.
+        page-parameter: page         # Page index parameter name.
+        prefix:                      # General prefix to be prepended to the page number and page size parameters.
+        qualifier-delimiter: _       # Delimiter to be used between the qualifier and the actual page number and size properties.
+        size-parameter: size         # Page size parameter name.
+        sort:
+          sort-parameter: id         # Sort parameter name.  
+  #====================================================================================================================#
+  # Data Source
+  #====================================================================================================================#  
+  datasource:    
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/postgres
+    username: postgres
+    password: 1234
+  #====================================================================================================================#
+  # JPA 
+  #====================================================================================================================#  
+  jpa:
+    database: POSTGRESQL
+    show-sql: false
+    #自動生成
+    generate-ddl: true
+    properties:          
+      hibernate:
+        default_schema: public
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        enable_lazy_load_no_trans: true
+        temp:
+          use_jdbc_metadata_defaults: false
+        #設定ddl的形式
+        ddl-auto: update
+        hbm2dll:
+          create_namespaces: true  #要自動生成schema
+          auto: update 
+#======================================================================================================================#
+# Logging
+#======================================================================================================================#
+#debug: true  # 該屬性設定為 true 的時候，核心 Logger（包含嵌入式容器、hibernate、spring）會输出更多内容，但是你自己应用的日志并不会输出为 DEBUG 级别
+#trace: true
+logging:
+  pattern:
+    #console: "%clr(%d{yy-MM-dd E HH:mm:ss.SSS}){blue} %clr(%-5p) %clr(${PID}){faint} %clr(---){faint} %clr([%8.15t]){cyan} %clr(%-40.40logger{0}){blue} %clr(:){red} %clr(%m){faint}%n"
+    console: "%clr(%d{dd HH:mm:ss.SSS}){magenta} %clr(%-5level) %clr([%8.15thread]){cyan} %clr(%-120.120(%logger{100}.%method %line)){yellow} %n%clr(%m){faint}%n"
+  level:
+    root: DEBUG  # TRACE, DEBUG, INFO, WARN, ERROR, FATAL, OFF
+    ueran.automation: DEBUG
+    ueran.automation.Application: INFO
+
+    java.lang.Class: WARN
+    javax.activation: WARN
+    # mail
+    javax.mail: WARN
+    javax.management: WARN
+    javax.management.remote.rmi: WARN
+    javax.management.mbeanserver: WARN
+    jdk.event.security: WARN
+
+    _org.springframework.web.servlet.HandlerMapping.Mappings: WARN
+    org.springframework: WARN
+    org.springframework.web.servlet.mvc.method.annotation.ExceptionHandlerExceptionResolver: WARN   
+    org.hibernate: WARN
+    org.apache.tomcat: WARN
+    org.apache.catalina: WARN
+    org.apache.coyote: WARN
+    org.apache.commons: WARN
+    org.postgresql: WARN
+    org.flywaydb.core: WARN
+    org.xnio: WARN
+    com.zaxxer.hikari: WARN
+    com.zaxxer.hikari.pool.ProxyConnection: WARN
+    # JsonPath
+    com.jayway.jsonpath.internal.path.CompiledPath: WARN
+    # QueryDSL SQL 指令顯示
+    com.querydsl.jpa.impl.JPAQuery: WARN
+    # mail
+    com.sun.mail.smtp: WARN
+    sun.net.www.protocol: WARN
+    # RMI
+    sun.rmi: WARN
+    springfox.documentation: WARN
+    io.netty: WARN
+    io.lettuce.core: WARN
+    io.undertow: WARN
+    io.micrometer: WARN
+    reactor.core.publisher: WARN
+    reactor.util.Loggers: WARN
+  
+  ## path & file 都不設定的話，就不會產生日誌檔案。
+  #path:          # 配置日誌的路径。如果没有配置 logging.file, 將默認使用 spring.log 作为文件名
+  #file: log.txt  # 配置日誌输出的文件名，也可以配置文件名的絕對路徑，但此時不可設定 logging.file，避免衝突 
+  #file.max-size: 10 MB
+  #file.max-history: 5  
+# 出现错误时, 直接抛出异常(便于异常统一处理，否则捕获不到 404)
+  mvc:
+    throw-exception-if-no-handler-found: true
+# 不要为我们工程中的资源文件建立映射
+  resources:
+    add-mappings: false
