@@ -32,8 +32,10 @@ public class SecurityProbeController {
 		 // 綁定到網卡上的IP地址
 		String ueIp = securityProbeService.getUeransimProbeIp();
         InetAddress inetAddress = InetAddress.getByName(ueIp);
-        int port = 8888;
-        Socket socket = new Socket(inetAddress, port);
+
+        String serverAddress = "60.251.156.214"; // 伺服器地址
+        int serverPort = 131; // 伺服器端口號
+        Socket socket = new Socket(serverAddress, serverPort, inetAddress, 0);
         System.out.println("Connected to server on " + socket.getRemoteSocketAddress());
 
         BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
