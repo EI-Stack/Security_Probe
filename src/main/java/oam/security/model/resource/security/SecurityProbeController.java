@@ -74,20 +74,21 @@ public class SecurityProbeController {
 	
 	@PostMapping("/transferImage")
 	@ResponseStatus(HttpStatus.OK)
-	private void transferImage(/*body參數(附帶標註)*/) throws Exception {
+	private void transferImage(/*content 附帶標註*/) throws Exception {
 		//與DN端建立socket
 		//先找出自己的網卡IP
-//		String ueIp = securityProbeService.getUeransimProbeIp();
-		String ueIp = "192.168.50.209";
+		String ueIp = securityProbeService.getUeransimProbeIp();
+//		String ueIp = "192.168.50.209";
         InetAddress inetAddress = InetAddress.getByName(ueIp);
 		
         //找出server
 //        String iperfTimeStamp = content.get("iperf3").get("timestamp").asText();
-//        String serverAddress = dn_service + "-" + iperfTimeStamp; // DN的server
-        String serverAddress = "localhost"; // DN的server
+//        String serverAddress = dn_service + "-" + iperfTimeStamp; // DN的server(正式用)
+        String serverAddress = dn_service; // DN的server(單純上214測試用)
+//        String serverAddress = "localhost"; // DN的server(本機測試用)
         //進行socket連線
-//        Socket socket = new Socket(serverAddress, dn_socketPort, inetAddress, 0);
-        Socket socket = new Socket(serverAddress, dn_socketPort);
+        Socket socket = new Socket(serverAddress, dn_socketPort, inetAddress, 0);
+//        Socket socket = new Socket(serverAddress, dn_socketPort);
         System.out.println("Connected to server on " + socket.getRemoteSocketAddress());
         
         BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));

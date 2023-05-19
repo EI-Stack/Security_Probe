@@ -12,6 +12,10 @@ solaris:
   prometheus:
     url: ${PROMETHEUS_URL}
     namespace: ${PROMETHEUS_NAMESPACE}
+  session:
+    dn-service: ${DN_SVC}
+    dn-socketPort: ${DN_SOCKET_PORT}
+    manage_service: ${MANAGE_SVC}
 #======================================================================================================================#
 # Spring
 #======================================================================================================================#
