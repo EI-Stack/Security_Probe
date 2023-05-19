@@ -25,6 +25,9 @@ solaris:
 #    identity: 
     login-password: P@ssw0rd
     sudo-password: P@ssw0rd
+    dn-service: iperf-svc
+    dn-socketPort: 8889
+    manage_service: mmanage-svc
   gnb:
     mcc: '208'
     mnc: '93'
