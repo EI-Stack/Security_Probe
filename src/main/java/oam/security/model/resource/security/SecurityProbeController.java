@@ -77,24 +77,24 @@ public class SecurityProbeController {
 	private void transferImage(/*content 附帶標註*/) throws Exception {
 		//與DN端建立socket
 		//先找出自己的網卡IP
-		String ueIp = securityProbeService.getUeransimProbeIp();
-//		String ueIp = "192.168.50.209";
-        InetAddress inetAddress = InetAddress.getByName(ueIp);
+//		String ueIp = securityProbeService.getUeransimProbeIp();//(上214及正式環境用)
+//		String ueIp = "192.168.50.209";//(本機測試用)
+//        InetAddress inetAddress = InetAddress.getByName(ueIp);
 		
         //找出server
 //        String iperfTimeStamp = content.get("iperf3").get("timestamp").asText();
 //        String serverAddress = dn_service + "-" + iperfTimeStamp; // DN的server(正式用)
-        String serverAddress = dn_service; // DN的server(單純上214測試用)
-//        String serverAddress = "localhost"; // DN的server(本機測試用)
+//        String serverAddress = dn_service; // DN的server(單純上214測試用)
+        String serverAddress = "localhost"; // DN的server(本機測試用)
         //進行socket連線
-        Socket socket = new Socket(serverAddress, dn_socketPort, inetAddress, 0);
-//        Socket socket = new Socket(serverAddress, dn_socketPort);
+//        Socket socket = new Socket(serverAddress, dn_socketPort, inetAddress, 0);//(單純上214測試用)
+        Socket socket = new Socket(serverAddress, dn_socketPort);//(本機測試用)
         System.out.println("Connected to server on " + socket.getRemoteSocketAddress());
         
         BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
         
-        out.println("Hello!");
+//        out.println("Hello!");
         
         // 建立輸入串流，用於讀取圖片檔案
         InputStream inputStream = new FileInputStream("image.jpg");
@@ -109,7 +109,7 @@ public class SecurityProbeController {
         while ((bytesRead = inputStream.read(buffer)) != -1) {
             imageOutputStream.write(buffer, 0, bytesRead);
         }
-
+        imageOutputStream.flush();
         System.out.println("圖片發送完成");
         
         // 關閉串流和Socket連接
