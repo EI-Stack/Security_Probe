@@ -1,6 +1,7 @@
 package oam.security.model.resource.security;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -38,6 +39,8 @@ public class SecurityProbeController {
 	private int dn_socketPort;
 	@Value("${solaris.session.manage-service}")
 	private String manage_service;
+	
+	private byte[] head = { (byte) 0xAA, (byte) 0xAB, (byte) 0xAC, (byte) 0xAD };
 	
 	@GetMapping("/testSocketBindInterface")
 	@ResponseStatus(HttpStatus.OK)
@@ -77,44 +80,54 @@ public class SecurityProbeController {
 	private void transferImage(/*content 附帶標註*/) throws Exception {
 		//與DN端建立socket
 		//先找出自己的網卡IP
-		String ueIp = securityProbeService.getUeransimProbeIp();//(上214及正式環境用)
-        InetAddress inetAddress = InetAddress.getByName(ueIp);
+//		String ueIp = securityProbeService.getUeransimProbeIp();//(上214及正式環境用)
+//        InetAddress inetAddress = InetAddress.getByName(ueIp);
 		
         //找出server
 //        String iperfTimeStamp = content.get("iperf3").get("timestamp").asText();
 //        String serverAddress = dn_service + "-" + iperfTimeStamp; // DN的server(正式用)
-        String serverAddress = dn_service; // DN的server(單純上214測試用)
-//        String serverAddress = "localhost"; // DN的server(本機測試用)
+//        String serverAddress = dn_service; // DN的server(單純上214測試用)
+        String serverAddress = "localhost"; // DN的server(本機測試用)
         //進行socket連線
-        Socket socket = new Socket(serverAddress, dn_socketPort, inetAddress, 0);//(單純上214測試用)
-//        Socket socket = new Socket(serverAddress, dn_socketPort);//(本機測試用)
+//        Socket socket = new Socket(serverAddress, dn_socketPort, inetAddress, 0);//(單純上214測試用)
+        Socket socket = new Socket(serverAddress, dn_socketPort);//(本機測試用)
         System.out.println("Connected to server on " + socket.getRemoteSocketAddress());
         
         BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
         
-//        out.println("Hello!");
-        
+        String imagesDirectory = "images/"; // 要傳送的圖片目錄
+        File imagesFolder = new File(imagesDirectory);
+        File[] imageFiles = imagesFolder.listFiles();
         // 建立輸入串流，用於讀取圖片檔案
-        InputStream inputStream = new FileInputStream("image.jpg");
         
-        // 建立緩衝區
-        byte[] buffer = new byte[4096];
-        int bytesRead;
         // 建立輸出串流，用於發送圖片
         OutputStream imageOutputStream = socket.getOutputStream();
         
-        // 發送圖片
-        while ((bytesRead = inputStream.read(buffer)) != -1) {
-            imageOutputStream.write(buffer, 0, bytesRead);
+        for (File imageFile : imageFiles) {
+        	System.out.println("\n傳送" + imagesDirectory + imageFile.getName());
+        	InputStream inputStream = new FileInputStream(imagesDirectory + imageFile.getName());
+        	 // 建立緩衝區
+            byte[] buffer = new byte[1];
+            int bytesRead;
+            //發送標頭檔
+		    for(int i = 0; i < head.length; i++) {
+		    	imageOutputStream.write(head[i]);
+		    	System.out.println("head[i]:" + head[i]);
+		    }
+            // 發送圖片
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+//            	System.out.print(bytesRead + ", ");
+                imageOutputStream.write(buffer, 0, bytesRead);
+            }
+
+            imageOutputStream.flush();
+            inputStream.close();
         }
-        imageOutputStream.flush();
+        
         System.out.println("圖片發送完成");
         
         // 關閉串流和Socket連接
         imageOutputStream.close();
-        inputStream.close();
-        out.close();
         socket.close();
         
         
