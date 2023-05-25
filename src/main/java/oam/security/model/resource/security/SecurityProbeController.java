@@ -40,6 +40,9 @@ public class SecurityProbeController {
 	@Value("${solaris.session.manage-service}")
 	private String manage_service;
 	
+	private String ansFolder = "ans/";
+	private String storeFolder = "receive/";
+	
 	private byte[] head = { (byte) 0xAA, (byte) 0xAB, (byte) 0xAC, (byte) 0xAD };
 	
 	@GetMapping("/testSocketBindInterface")
@@ -95,7 +98,7 @@ public class SecurityProbeController {
         
         BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         
-        String imagesDirectory = "images/"; // 要傳送的圖片目錄
+        String imagesDirectory = ansFolder; // 要傳送的圖片目錄
         File imagesFolder = new File(imagesDirectory);
         File[] imageFiles = imagesFolder.listFiles();
         // 建立輸入串流，用於讀取圖片檔案
