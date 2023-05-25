@@ -114,8 +114,14 @@ public class SecurityProbeController {
             int bytesRead;
             //發送標頭檔
 		    for(int i = 0; i < head.length; i++) {
-		    	imageOutputStream.write(head[i]);
-		    	System.out.println("head[i]:" + head[i]);
+		    	if(i == head.length - 1) {
+		    		//最後一個標頭檔依據檔名決定
+		    		System.out.println("head[i]:" + chooseLastHead(imageFile.getName()));
+		    		imageOutputStream.write(chooseLastHead(imageFile.getName()));
+		    	}else {
+		    		System.out.println("head[i]:" + head[i]);
+		    		imageOutputStream.write(head[i]);
+		    	}
 		    }
             // 發送圖片
             while ((bytesRead = inputStream.read(buffer)) != -1) {
@@ -133,7 +139,44 @@ public class SecurityProbeController {
         imageOutputStream.close();
         socket.close();
         
-        
+	}
+	
+	
+	private byte chooseLastHead(String fileName) {
+		byte lastHead = (byte)0xAD;
+		switch(fileName) {
+			case "Account.jpg":
+				lastHead = (byte)0x98;
+				break;
+			case "Chest X-Ray.jpg":
+				lastHead = (byte)0x97;
+				break;
+			case "covid19-Positive.jpg":
+				lastHead = (byte)0x96;
+				break;
+			case "Hands X ray.jpg":
+				lastHead = (byte)0x95;
+				break;
+			case "Identity Card.jpg":
+				lastHead = (byte)0x94;
+				break;
+			case "Insurance.jpg":
+				lastHead = (byte)0x93;
+				break;
+			case "missile.jpg":
+				lastHead = (byte)0x92;
+				break;
+			case "Modem.jpg":
+				lastHead = (byte)0x91;
+				break;
+			case "Panasonic.jpg":
+				lastHead = (byte)0x90;
+				break;
+			case "Taiwan.jpg":
+				lastHead = (byte)0x89;
+				break;
+		}
+		return lastHead;
 	}
 
 }
