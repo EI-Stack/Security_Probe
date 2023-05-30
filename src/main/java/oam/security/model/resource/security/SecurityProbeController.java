@@ -22,6 +22,9 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -39,6 +42,8 @@ public class SecurityProbeController {
 	private int dn_socketPort;
 	@Value("${solaris.session.manage-service}")
 	private String manage_service;
+	@Autowired
+	private ObjectMapper objectMapper;
 	
 	private String ansFolder = "ans/";
 	
@@ -79,7 +84,7 @@ public class SecurityProbeController {
 	
 	@PostMapping("/transferImage")
 	@ResponseStatus(HttpStatus.OK)
-	private void transferImage(/*content 附帶標註*/) throws Exception {
+	private JsonNode transferImage(/*content 附帶標註*/) throws Exception {
 		//與DN端建立socket
 		//先找出自己的網卡IP
 //		String ueIp = securityProbeService.getUeransimProbeIp();//(上214及正式環境用)
@@ -95,14 +100,27 @@ public class SecurityProbeController {
         Socket socket = new Socket(serverAddress, dn_socketPort);//(本機測試用)
         System.out.println("Connected to server on " + socket.getRemoteSocketAddress());
         
+        ObjectNode result = objectMapper.createObjectNode();
+        result.put("Role", "Probe");//先確定腳色
+		ObjectNode receiveData = objectMapper.createObjectNode();//存放 接收圖片的log
+		ObjectNode sendData = objectMapper.createObjectNode();//存放 傳送圖片的log
+        
         //建立輸出串流，用於讀取圖片檔案
-        securityProbeService.sendPicture(socket);     
+        ArrayNode send = securityProbeService.sendPicture(socket);
+        sendData.set("send_log", send);
         
         // 建立輸入串流，用於讀取圖片檔案
-        securityProbeService.reveicePicture(socket);
+        ArrayNode receive = securityProbeService.reveicePicture(socket);
+        receiveData.set("receive_log", receive);
         
         //檢查圖片
         JsonNode compareResult = securityProbeService.checkImage();
+        receiveData.set("receive_compare", compareResult);
+        
+        result.set("transfer", receiveData);
+        result.set("send", sendData);
+        
+        return result;
 	}
 	
 	

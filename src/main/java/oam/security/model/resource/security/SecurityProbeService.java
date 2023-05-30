@@ -13,6 +13,9 @@ import java.net.InetAddress;
 import java.net.InterfaceAddress;
 import java.net.NetworkInterface;
 import java.net.Socket;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 
 import javax.imageio.ImageIO;
 
@@ -22,6 +25,7 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import lombok.extern.slf4j.Slf4j;
@@ -54,7 +58,9 @@ public class SecurityProbeService {
 		return targetIp;
 	}
 	
-	public void sendPicture(Socket socket) throws Exception{
+	public ArrayNode sendPicture(Socket socket) throws Exception{
+		log.info("準備傳送!!!");
+		ArrayNode send = objectMapper.createArrayNode();  //存放 傳送圖片的log
         String imagesDirectory = ansFolder; // 要傳送的圖片目錄
         File imagesFolder = new File(imagesDirectory);
         File[] imageFiles = imagesFolder.listFiles();
@@ -62,7 +68,9 @@ public class SecurityProbeService {
         OutputStream imageOutputStream = socket.getOutputStream();
         
         for (File imageFile : imageFiles) {
+        	ObjectNode sendLog = objectMapper.createObjectNode();
         	System.out.println("\n傳送" + imagesDirectory + imageFile.getName());
+        	sendLog.put("FileName", imageFile.getName());
         	//這是每一張圖片的串流
         	InputStream inputStreamImage = new FileInputStream(imagesDirectory + imageFile.getName());
         	 // 建立緩衝區
@@ -79,6 +87,8 @@ public class SecurityProbeService {
 		    		imageOutputStream.write(head[i]);
 		    	}
 		    }
+		    sendLog.put("FileSize", imageFile.length() + " Bytes");
+		    sendLog.put("StartTime", getNowTime());
             // 發送圖片
             while ((bytesRead = inputStreamImage.read(buffer)) != -1) {
 //            	System.out.print(bytesRead + ", ");
@@ -86,8 +96,10 @@ public class SecurityProbeService {
             }
             //剛剛沒傳送完的傳送出去
             imageOutputStream.flush();
+            sendLog.put("EndTime", getNowTime());
             //關閉要讀出單張圖片的串流
             inputStreamImage.close();
+            send.add(sendLog);
         }
         
         imageOutputStream.write(head[0]);
@@ -99,13 +111,15 @@ public class SecurityProbeService {
         System.out.println("圖片發送完成");
         // 關閉輸出串流和Socket連接
 //        imageOutputStream.close();  //這裡關了會有問題
+        return send;
 	}
 	
-	public void reveicePicture(Socket socket) throws Exception {
+	public ArrayNode reveicePicture(Socket socket) throws Exception {
 		InputStream inputStream = socket.getInputStream();
 		//先清空receive資料夾
 		File receivedirectory = new File(receiveFolder);
 		FileUtils.cleanDirectory(receivedirectory);
+		ArrayNode receive = objectMapper.createArrayNode();  //存放 接收圖片的log
 		
 		//計算現在是哪一張圖片
         int countPicture = 0;
@@ -122,14 +136,18 @@ public class SecurityProbeService {
 //        outputStream = new FileOutputStream("image" + String.valueOf(countPicture) + ".jpg");
         // 接收圖片數據
         int bytesRead;
+        ObjectNode fileLog = null;
         while ((bytesRead = inputStream.read(buffer)) != -1) {
 //        	System.out.print(bytesRead+",");        	
         	if(countHead == 3) { //準備比序號3 (第四個)
         		if(compareLastHead(buffer[0])) { //有比對成功(10張圖片的標頭)
         			System.out.println("header比對完畢 開啟下一張圖片串流");
-        			if(outputStream != null) {
+        			if(outputStream != null && fileLog != null) {
         				//關閉剛剛的圖片串流
         				outputStream.close();
+        				fileLog.put("EndTime", getNowTime());  //紀錄傳送結束時間
+        				receive.add(fileLog);
+        				fileLog = objectMapper.createObjectNode();//用一個新的
         			}
         			fileName = getFileNameByHead(buffer[0]);
         			//標頭檔Index歸零
@@ -141,6 +159,11 @@ public class SecurityProbeService {
     				//開啟新圖片的串流
     				outputStream = new FileOutputStream(receiveFolder + fileName);
     				System.out.println("開啟" + receiveFolder + fileName + " 圖片串流");
+    				if(fileLog == null) {
+    					fileLog = objectMapper.createObjectNode();
+    				}
+    				fileLog.put("FileName", fileName);
+    				fileLog.put("StartTime", getNowTime());//紀錄傳送開始時間
     				isImageData = true;
     				continue;  //跳出去 不要往下比 因為這個還是標頭不能寫入圖片檔案
         		}else if(buffer[0] == (byte)0x11){  //如果前三個都對 最後一個是0x11就代表全部結束
@@ -185,9 +208,10 @@ public class SecurityProbeService {
         }
         outputStream.close();
         System.out.println("圖片接收完成");
+        return receive;
 	}
 	
-	public JsonNode checkImage() throws Exception {
+	public ArrayNode checkImage() throws Exception {
 		String ansDirectory = ansFolder; // 正確答案圖片目錄
         File ansFolder = new File(ansDirectory);
         File[] ansFiles = ansFolder.listFiles();
@@ -195,8 +219,7 @@ public class SecurityProbeService {
         File receiveFolder = new File(receiveDirectory);
         File[] receiveFiles = receiveFolder.listFiles();
         boolean []haveCheckAns = new boolean[10];  //這裡要寫10張圖片 免得有圖片沒傳來也被說OK
-        ObjectNode result = objectMapper.createObjectNode();
-        result.put("Role", "Probe_DN");//腳色是DN
+        ArrayNode result = objectMapper.createArrayNode();
         //先預設都沒有查過
         System.out.println("預設為全部false");
         for(int i = 0; i < haveCheckAns.length; i++) {
@@ -238,9 +261,16 @@ public class SecurityProbeService {
         	ObjectNode compareResult = objectMapper.createObjectNode();
         	compareResult.put("compare", haveCheckAns[i]);
         	compareResult.put("FileName", getImageFileNameIndex(i));
+        	result.add(compareResult);  //把檢測結果加入array
         	System.out.print(haveCheckAns[i] + ", ");
         }
         return result;
+	}
+	
+	public String getNowTime() {
+		ZonedDateTime zonedDateTime = ZonedDateTime.of(LocalDateTime.now(), ZoneId.of("UTC"));
+        System.out.println(zonedDateTime.toLocalDateTime());
+        return zonedDateTime.toLocalDateTime().toString();
 	}
 	
 	public boolean compareLastHead(byte lastHead) {
