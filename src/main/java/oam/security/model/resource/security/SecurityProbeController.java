@@ -41,7 +41,6 @@ public class SecurityProbeController {
 	private String manage_service;
 	
 	private String ansFolder = "ans/";
-	private String storeFolder = "receive/";
 	
 	private byte[] head = { (byte) 0xAA, (byte) 0xAB, (byte) 0xAC, (byte) 0xAD };
 	
@@ -101,14 +100,14 @@ public class SecurityProbeController {
         String imagesDirectory = ansFolder; // 要傳送的圖片目錄
         File imagesFolder = new File(imagesDirectory);
         File[] imageFiles = imagesFolder.listFiles();
-        // 建立輸入串流，用於讀取圖片檔案
         
-        // 建立輸出串流，用於發送圖片
+        // 建立輸出串流，用於發送圖片到DN
         OutputStream imageOutputStream = socket.getOutputStream();
         
         for (File imageFile : imageFiles) {
         	System.out.println("\n傳送" + imagesDirectory + imageFile.getName());
-        	InputStream inputStream = new FileInputStream(imagesDirectory + imageFile.getName());
+        	//這是每一張圖片的串流
+        	InputStream inputStreamImage = new FileInputStream(imagesDirectory + imageFile.getName());
         	 // 建立緩衝區
             byte[] buffer = new byte[1];
             int bytesRead;
@@ -124,25 +123,38 @@ public class SecurityProbeController {
 		    	}
 		    }
             // 發送圖片
-            while ((bytesRead = inputStream.read(buffer)) != -1) {
+            while ((bytesRead = inputStreamImage.read(buffer)) != -1) {
 //            	System.out.print(bytesRead + ", ");
                 imageOutputStream.write(buffer, 0, bytesRead);
             }
-
+            //剛剛沒傳送完的傳送出去
             imageOutputStream.flush();
-            inputStream.close();
+            //關閉要讀出單張圖片的串流
+            inputStreamImage.close();
         }
+        
+        imageOutputStream.write(head[0]);
+        imageOutputStream.write(head[1]);
+        imageOutputStream.write(head[2]);
+        imageOutputStream.write((byte)0x11);
+        imageOutputStream.flush();
         
         System.out.println("圖片發送完成");
         
-        // 關閉串流和Socket連接
+        // 建立輸入串流，用於讀取圖片檔案
+        securityProbeService.reveicePicture(socket);
+        
+        //檢查圖片
+        JsonNode compareResult = securityProbeService.checkImage();
+        
+        // 關閉輸出串流和Socket連接
         imageOutputStream.close();
-        socket.close();
         
 	}
 	
 	
-	private byte chooseLastHead(String fileName) {
+
+private byte chooseLastHead(String fileName) {
 		byte lastHead = (byte)0xAD;
 		switch(fileName) {
 			case "Account.jpg":
@@ -178,5 +190,6 @@ public class SecurityProbeController {
 		}
 		return lastHead;
 	}
+	
 
 }
