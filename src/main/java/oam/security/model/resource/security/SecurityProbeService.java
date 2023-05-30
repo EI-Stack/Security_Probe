@@ -55,13 +55,10 @@ public class SecurityProbeService {
 	}
 	
 	public void sendPicture(Socket socket) throws Exception{
-		BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-          
         String imagesDirectory = ansFolder; // 要傳送的圖片目錄
         File imagesFolder = new File(imagesDirectory);
         File[] imageFiles = imagesFolder.listFiles();
-        
-        // 建立輸出串流，用於發送圖片到DN
+		// 建立輸出串流，用於發送圖片到DN
         OutputStream imageOutputStream = socket.getOutputStream();
         
         for (File imageFile : imageFiles) {
@@ -92,7 +89,7 @@ public class SecurityProbeService {
             //關閉要讀出單張圖片的串流
             inputStreamImage.close();
         }
-        //發結束標記記
+        
         imageOutputStream.write(head[0]);
         imageOutputStream.write(head[1]);
         imageOutputStream.write(head[2]);
@@ -100,8 +97,8 @@ public class SecurityProbeService {
         imageOutputStream.flush();
         
         System.out.println("圖片發送完成");
-        // 關閉輸出串流
-        imageOutputStream.close();
+        // 關閉輸出串流和Socket連接
+//        imageOutputStream.close();  //這裡關了會有問題
 	}
 	
 	public void reveicePicture(Socket socket) throws Exception {
