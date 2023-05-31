@@ -117,7 +117,7 @@ public class SecurityProbeController {
         JsonNode compareResult = securityProbeService.checkImage();
         receiveData.set("receive_compare", compareResult);
         
-        result.set("transfer", receiveData);
+        result.set("receive", receiveData);
         result.set("send", sendData);
         
         return result;

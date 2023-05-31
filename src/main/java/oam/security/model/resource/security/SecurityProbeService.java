@@ -182,6 +182,8 @@ public class SecurityProbeService {
         			isImageData = false;
         			//關閉串流
         	        inputStream.close();
+        	        fileLog.put("EndTime", getNowTime());  //紀錄傳送結束時間
+    				receive.add(fileLog);
         	        socket.close();
         			break;
         		}
@@ -280,7 +282,7 @@ public class SecurityProbeService {
 	
 	public String getNowTime() {
 		ZonedDateTime zonedDateTime = ZonedDateTime.of(LocalDateTime.now(), ZoneId.of("UTC"));
-        System.out.println(zonedDateTime.toLocalDateTime());
+//        System.out.println(zonedDateTime.toLocalDateTime());
         return zonedDateTime.toLocalDateTime().toString();
 	}
 	
