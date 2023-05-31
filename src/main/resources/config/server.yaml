@@ -2,7 +2,7 @@
 # Server
 #======================================================================================================================#
 server:  
-  port: 8081  # Spring Boot 内置 Web 容器預設 port
+  port: 8080  # Spring Boot 内置 Web 容器預設 port
   servlet:
     contextPath:
   shutdown: graceful  

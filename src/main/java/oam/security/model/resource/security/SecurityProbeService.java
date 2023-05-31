@@ -315,13 +315,13 @@ public class SecurityProbeService {
 		if(lastHead == (byte)0x98) {
 			return "Account.jpg";
 		}else if(lastHead == (byte)0x97) {
-			return "Chest X-Ray.jpg";
+			return "ChestXRay.jpg";
 		}else if(lastHead == (byte)0x96) {
-			return "covid19-Positive.jpg";
+			return "covid19Positive.jpg";
 		}else if(lastHead == (byte)0x95) {
-			return "Hands X ray.jpg";
+			return "HandsXray.jpg";
 		}else if(lastHead == (byte)0x94) {
-			return "Identity Card.jpg";
+			return "IdentityCard.jpg";
 		}else if(lastHead == (byte)0x93) {
 			return "Insurance.jpg";
 		}else if(lastHead == (byte)0x92) {
@@ -342,16 +342,16 @@ public class SecurityProbeService {
 			case "Account.jpg":
 				index = 0;
 				break;
-			case "Chest X-Ray.jpg":
+			case "ChestXRay.jpg":
 				index = 1;
 				break;
-			case "covid19-Positive.jpg":
+			case "covid19Positive.jpg":
 				index = 2;
 				break;
-			case "Hands X ray.jpg":
+			case "HandsXray.jpg":
 				index = 3;
 				break;
-			case "Identity Card.jpg":
+			case "IdentityCard.jpg":
 				index = 4;
 				break;
 			case "Insurance.jpg":
@@ -380,16 +380,16 @@ public class SecurityProbeService {
 				fileName = "Account.jpg";
 				break;
 			case 1:
-				fileName = "Chest X-Ray.jpg";
+				fileName = "ChestXRay.jpg";
 				break;
 			case 2:
-				fileName = "covid19-Positive.jpg";
+				fileName = "covid19Positive.jpg";
 				break;
 			case 3:
-				fileName = "Hands X ray.jpg";
+				fileName = "HandsXray.jpg";
 				break;
 			case 4:
-				fileName = "Identity Card.jpg";
+				fileName = "IdentityCard.jpg";
 				break;
 			case 5:
 				fileName = "Insurance.jpg";
@@ -416,16 +416,16 @@ public class SecurityProbeService {
 			case "Account.jpg":
 				lastHead = (byte)0x98;
 				break;
-			case "Chest X-Ray.jpg":
+			case "ChestXRay.jpg":
 				lastHead = (byte)0x97;
 				break;
-			case "covid19-Positive.jpg":
+			case "covid19Positive.jpg":
 				lastHead = (byte)0x96;
 				break;
-			case "Hands X ray.jpg":
+			case "HandsXray.jpg":
 				lastHead = (byte)0x95;
 				break;
-			case "Identity Card.jpg":
+			case "IdentityCard.jpg":
 				lastHead = (byte)0x94;
 				break;
 			case "Insurance.jpg":
