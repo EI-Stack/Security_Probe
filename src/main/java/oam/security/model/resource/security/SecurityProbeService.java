@@ -116,8 +116,19 @@ public class SecurityProbeService {
 	
 	public ArrayNode reveicePicture(Socket socket) throws Exception {
 		InputStream inputStream = socket.getInputStream();
-		//先清空receive資料夾
+		//先建立資料夾 如果資料夾存在就清空receive資料夾
 		File receivedirectory = new File(receiveFolder);
+		if (!receivedirectory.exists()) {
+            // 資料夾不存在，建立資料夾
+            boolean created = receivedirectory.mkdirs();
+            if (created) {
+                System.out.println("資料夾已成功建立");
+            } else {
+                System.out.println("無法建立資料夾");
+            }
+        } else {
+            System.out.println("資料夾已存在");
+        }
 		FileUtils.cleanDirectory(receivedirectory);
 		ArrayNode receive = objectMapper.createArrayNode();  //存放 接收圖片的log
 		
