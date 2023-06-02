@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
@@ -84,11 +85,13 @@ public class SecurityProbeController {
 	
 	@PostMapping("/transferImage")
 	@ResponseStatus(HttpStatus.OK)
-	private JsonNode transferImage(/*content 附帶標註*/) throws Exception {
+	private JsonNode transferImage(@RequestBody JsonNode iperf) throws Exception {
 		//與DN端建立socket
 		//先找出自己的網卡IP
 		String ueIp = securityProbeService.getUeransimProbeIp();//(上214及正式環境用)
         InetAddress inetAddress = InetAddress.getByName(ueIp);
+        int socketPort = iperf.get("socketPort").asInt();
+        log.info("DN socket nodeport:" + String.valueOf(socketPort));
 		
         //找出server
 //        String iperfTimeStamp = content.get("iperf3").get("timestamp").asText();
@@ -96,8 +99,8 @@ public class SecurityProbeController {
         String serverAddress = dn_service; // DN的server(單純上214測試用)
 //        String serverAddress = "localhost"; // DN的server(本機測試用)
         //進行socket連線
-        Socket socket = new Socket(serverAddress, dn_socketPort, inetAddress, 0);//(單純上214測試用)
-//        Socket socket = new Socket(serverAddress, dn_socketPort);//(本機測試用)
+        Socket socket = new Socket(serverAddress, socketPort, inetAddress, 0);//(單純上214測試用)
+//        Socket socket = new Socket(serverAddress, socketPort);//(本機測試用)
         System.out.println("Connected to server on " + socket.getRemoteSocketAddress());
         
         ObjectNode result = objectMapper.createObjectNode();
