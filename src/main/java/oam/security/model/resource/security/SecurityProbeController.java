@@ -98,7 +98,10 @@ public class SecurityProbeController {
 //        String serverAddress = dn_service + "-" + iperfTimeStamp; // DN的server(正式用)
         String serverAddress = dn_service; // DN的server(單純上214測試用)
 //        String serverAddress = "localhost"; // DN的server(本機測試用)
+        
         //進行socket連線
+        //serverAddress 是由外部指定，socketNodePort是管理程式傳過來的(因為是管理程式決定nodePort的)
+        log.info("serverAddress:" + serverAddress + "  socketPort:" + socketPort);
         Socket socket = new Socket(serverAddress, socketPort, inetAddress, 0);//(單純上214測試用)
 //        Socket socket = new Socket(serverAddress, socketPort);//(本機測試用)
         System.out.println("Connected to server on " + socket.getRemoteSocketAddress());
