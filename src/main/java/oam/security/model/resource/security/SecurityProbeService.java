@@ -21,6 +21,7 @@ import javax.imageio.ImageIO;
 
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -29,6 +30,8 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import lombok.extern.slf4j.Slf4j;
+import oam.security.service.CoreNetworkService;
+import oam.security.service.NetworkServiceBase;
 
 @Service
 @Slf4j
@@ -39,6 +42,10 @@ public class SecurityProbeService {
 	private byte[] head = { (byte) 0xAA, (byte) 0xAB, (byte) 0xAC, (byte) 0xAD };
 	@Autowired
 	private ObjectMapper objectMapper;
+	@Autowired
+	private NetworkServiceBase networkService;
+	@Value("${solaris.session.manage-service}")
+	private String manage_service;
 	
 	//取得探針這台機器的IP
 	public String getUeransimProbeIp() throws Exception{
@@ -224,7 +231,7 @@ public class SecurityProbeService {
         return receive;
 	}
 	
-	public ArrayNode checkImage() throws Exception {
+	public JsonNode checkImage() throws Exception {
 		String ansDirectory = ansFolder; // 正確答案圖片目錄
         File ansFolder = new File(ansDirectory);
         File[] ansFiles = ansFolder.listFiles();
@@ -232,6 +239,7 @@ public class SecurityProbeService {
         File receiveFolder = new File(receiveDirectory);
         File[] receiveFiles = receiveFolder.listFiles();
         boolean []haveCheckAns = new boolean[10];  //這裡要寫10張圖片 免得有圖片沒傳來也被說OK
+        ObjectNode check = objectMapper.createObjectNode();
         ArrayNode result = objectMapper.createArrayNode();
         //先預設都沒有查過
         System.out.println("預設為全部false");
@@ -277,7 +285,14 @@ public class SecurityProbeService {
         	result.add(compareResult);  //把檢測結果加入array
         	System.out.print(haveCheckAns[i] + ", ");
         }
-        return result;
+        check.put("Role", "Probe");
+        check.set("content", result);
+        return check;
+	}
+	
+	public void notifyManagerImageComapreResult(JsonNode result) {
+		String url = manage_service + "/v1/security/receiveImageCompareResult";
+		networkService.postJsonInformation(url, result);
 	}
 	
 	public String getNowTime() {

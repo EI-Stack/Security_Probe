@@ -23,6 +23,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -339,5 +340,33 @@ public class NetworkServiceBase
         
         log.info("response:" + response);
         return response;
+    }
+	
+	/**
+	 * 用來呼叫探針用的方法
+	 * @param url
+	 * @param body
+	 * @return
+	 */
+	public JsonNode postJsonInformation(String url, JsonNode body){
+		final HttpEntity<JsonNode> requestEntity = new HttpEntity<>(body, getHeaders());
+		log.info("url:" + url);
+		try {
+			final ResponseEntity<JsonNode> responseEntity = this.restTemplate.exchange(url, HttpMethod.POST,
+                    requestEntity, JsonNode.class);
+			return responseEntity.getBody();
+        } catch (final HttpStatusCodeException e) {
+            e.printStackTrace();
+        }
+		return null;
+	}
+	/**
+	 * 探針的header加入Bearer token
+	 * @return
+	 */
+	private HttpHeaders getHeaders() {//加入Bearer token
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add("Authorization", "Bearer eyJhbGciOiJIUzUxMiJ9.eyJ1c2VybmFtZSI6IlVTRVJfQURNSU4iLCJyb2xlIjoiUk9MRV9BRE1JTiIsImlhdCI6MTU1ODg4NjQwMCwiZXhwIjoxODc0MjQ2NDAwfQ.vbkgcdaGE61jJL-Jrf4hMAek4lDyGKtRkmDw0gjuvTvYEPK1rvfZiU0xn5pTYvlCrxPKBAnU2GTmo1EO0tIZiA");
+        return httpHeaders;
     }
 }

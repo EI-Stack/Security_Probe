@@ -118,6 +118,8 @@ public class SecurityProbeController {
         // 建立輸入串流，用於讀取圖片檔案
         ArrayNode receive = securityProbeService.reveicePicture(socket);
         receiveData.set("receive_log", receive);
+        //通知管理程式檢查圖片的結果
+        securityProbeService.notifyManagerImageComapreResult(receive);
         
         //檢查圖片
         JsonNode compareResult = securityProbeService.checkImage();
