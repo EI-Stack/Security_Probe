@@ -27,7 +27,7 @@ solaris:
     sudo-password: P@ssw0rd
     dn-service: 60.251.156.214
     dn-socketPort: 8888
-    manage_service: manage-svc
+    manage_service: http://manage-svc:8080
   gnb:
     mcc: '208'
     mnc: '93'

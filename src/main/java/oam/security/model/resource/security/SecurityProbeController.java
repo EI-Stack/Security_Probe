@@ -101,9 +101,9 @@ public class SecurityProbeController {
         
         //進行socket連線
         //serverAddress 是由外部指定，socketNodePort是管理程式傳過來的(因為是管理程式決定nodePort的)
-        log.info("serverAddress:" + serverAddress + "  socketPort:" + socketPort);
+        log.info("serverAddress:" + serverAddress + "  socketPort:" + 8888);
         Socket socket = new Socket(serverAddress, socketPort, inetAddress, 0);//(單純上214測試用)
-//        Socket socket = new Socket(serverAddress, socketPort);//(本機測試用)
+//        Socket socket = new Socket(serverAddress, 8888);//(本機測試用)
         System.out.println("Connected to server on " + socket.getRemoteSocketAddress());
         
         ObjectNode result = objectMapper.createObjectNode();
@@ -118,12 +118,12 @@ public class SecurityProbeController {
         // 建立輸入串流，用於讀取圖片檔案
         ArrayNode receive = securityProbeService.reveicePicture(socket);
         receiveData.set("receive_log", receive);
-        //通知管理程式檢查圖片的結果
-        securityProbeService.notifyManagerImageComapreResult(receive);
         
         //檢查圖片
         JsonNode compareResult = securityProbeService.checkImage();
         receiveData.set("receive_compare", compareResult);
+        //通知管理程式檢查圖片的結果
+        securityProbeService.notifyManagerImageComapreResult(compareResult);
         
         result.set("receive", receiveData);
         result.set("send", sendData);
