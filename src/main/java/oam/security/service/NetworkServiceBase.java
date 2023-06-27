@@ -76,6 +76,7 @@ public class NetworkServiceBase
 		JsonNode responseJson = null;
 		try
 		{
+			this.restTemplate = new RestTemplate();
 			response = this.restTemplate.exchange(path, HttpMethod.GET, requestEntity, JsonNode.class);
 			log.debug("\t GET StatusCode={}", response.getStatusCode());
 			if (!(response.getStatusCode().equals(HttpStatus.OK))) throw new ExceptionBase(400, "Fetching resource is failed.");
@@ -105,6 +106,7 @@ public class NetworkServiceBase
 		JsonNode responseJson = null;
 		try
 		{
+			this.restTemplate = new RestTemplate();
 			response = this.restTemplate.exchange(path, HttpMethod.GET, requestEntity, JsonNode.class);
 			log.debug("\t GET StatusCode={}", response.getStatusCode());
 			if (!(response.getStatusCode().equals(HttpStatus.OK))) throw new ExceptionBase(400, "Fetching resource is failed.");
@@ -156,6 +158,7 @@ public class NetworkServiceBase
 		JsonNode responseJson = null;
 		try
 		{
+			this.restTemplate = new RestTemplate();
 			final ResponseEntity<JsonNode> response = this.restTemplate.exchange(path, HttpMethod.POST, requestEntity, JsonNode.class);
 			log.debug("\t POST StatusCode={}", response.getStatusCode());
 			if (!(response.getStatusCode().equals(HttpStatus.OK))) throw new ExceptionBase(400, "Creating resource is failed.");
@@ -185,6 +188,7 @@ public class NetworkServiceBase
 		final HttpEntity<JsonNode> requestEntity = new HttpEntity<>(requestNode, this.httpHeaders);
 		try
 		{
+			this.restTemplate = new RestTemplate();
 			final ResponseEntity<JsonNode> response = this.restTemplate.exchange(url, HttpMethod.PUT, requestEntity, JsonNode.class);
 			log.debug("PUT StatusCode =[{}]", response.getStatusCode().toString());
 			if (!response.getStatusCode().equals(HttpStatus.NO_CONTENT)) throw new ExceptionBase(400, "Modifing resource is failed.");
@@ -210,6 +214,7 @@ public class NetworkServiceBase
 		final HttpEntity<JsonNode> requestEntity = new HttpEntity<>(this.httpHeaders);
 		try
 		{
+			this.restTemplate = new RestTemplate();
 			final ResponseEntity<JsonNode> response = this.restTemplate.exchange(url, HttpMethod.DELETE, requestEntity, JsonNode.class);
 			log.debug("\t DELETE StatusCode={}", response.getStatusCode());
 			if (!(response.getStatusCode().equals(HttpStatus.NO_CONTENT))) throw new ExceptionBase(400, "Delete resource is failed.");
@@ -246,6 +251,7 @@ public class NetworkServiceBase
 		final HttpEntity<ObjectNode> requestEntity = new HttpEntity<>(this.httpHeaders);
 		ResponseEntity<JsonNode> response = null;
 		JsonNode responseJson = null;
+		this.restTemplate = new RestTemplate();
 		try
 		{
 			response = this.restTemplate.exchange(path, HttpMethod.GET, requestEntity, JsonNode.class);
@@ -350,6 +356,7 @@ public class NetworkServiceBase
 	 */
 	public JsonNode postJsonInformation(String url, JsonNode body){
 		final HttpEntity<JsonNode> requestEntity = new HttpEntity<>(body, getHeaders());
+		this.restTemplate = new RestTemplate();
 		log.info("url:" + url);
 		try {
 			final ResponseEntity<JsonNode> responseEntity = this.restTemplate.exchange(url, HttpMethod.POST,
