@@ -101,7 +101,8 @@ public class SecurityProbeController {
         
         //進行socket連線
         //serverAddress 是由外部指定，socketNodePort是管理程式傳過來的(因為是管理程式決定nodePort的)
-        log.info("serverAddress:" + serverAddress + "  socketPort:" + 8888);
+        log.info("serverAddress:" + serverAddress + "  socketPort:" + String.valueOf(socketPort));
+        log.info("inetAddress:" + inetAddress.toString());
         Socket socket = new Socket(serverAddress, socketPort, inetAddress, 0);//(單純上214測試用)
 //        Socket socket = new Socket(serverAddress, 8888);//(本機測試用)
         System.out.println("Connected to server on " + socket.getRemoteSocketAddress());
