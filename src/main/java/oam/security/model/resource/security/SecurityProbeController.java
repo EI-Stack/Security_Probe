@@ -92,6 +92,7 @@ public class SecurityProbeController {
         InetAddress inetAddress = InetAddress.getByName(ueIp);
         int socketPort = iperf.get("socketPort").asInt();
         log.info("DN socket nodeport:" + String.valueOf(socketPort));
+        String probe_id = iperf.get("probe_id").asText();
 		
         //找出server
 //        String iperfTimeStamp = content.get("iperf3").get("timestamp").asText();
@@ -122,6 +123,7 @@ public class SecurityProbeController {
         
         //檢查圖片
         JsonNode compareResult = securityProbeService.checkImage();
+        ((ObjectNode)compareResult).put(probe_id, probe_id);
         receiveData.set("receive_compare", compareResult);
         //通知管理程式檢查圖片的結果
         securityProbeService.notifyManagerImageComapreResult(compareResult);
