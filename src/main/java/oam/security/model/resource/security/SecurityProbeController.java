@@ -123,7 +123,7 @@ public class SecurityProbeController {
         
         //檢查圖片
         JsonNode compareResult = securityProbeService.checkImage();
-        ((ObjectNode)compareResult).put(probe_id, probe_id);
+        ((ObjectNode)compareResult).put("probe_id", probe_id);
         receiveData.set("receive_compare", compareResult);
         //通知管理程式檢查圖片的結果
         securityProbeService.notifyManagerImageComapreResult(compareResult);
