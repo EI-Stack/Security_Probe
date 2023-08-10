@@ -3,6 +3,8 @@ package oam.security.model.resource.security;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -15,12 +17,16 @@ import java.net.URISyntaxException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -113,7 +119,7 @@ public class SecurityProbeController {
 		ObjectNode receiveData = objectMapper.createObjectNode();//存放 接收圖片的log
 		ObjectNode sendData = objectMapper.createObjectNode();//存放 傳送圖片的log
         
-        //建立輸出串流，用於讀取圖片檔案
+        //建立輸出串流，用於傳送圖片檔案
         ArrayNode send = securityProbeService.sendPicture(socket);
         sendData.set("send_log", send);
         
@@ -134,6 +140,45 @@ public class SecurityProbeController {
         return result;
 	}
 	
+	@PostMapping(value = "/uploadPicture", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<String> uploadImages(@RequestParam("files") MultipartFile[] files) {
+//		String folderPath = "C:\\workspace\\Security_Probe\\target\\uploadPict";
+		String folderPath = "/uploadPict";
+		// 建立 File 物件
+        File folder = new File(folderPath);
+        // 檢查資料夾是否存在 若不存在就建立
+        if (!folder.exists()) {
+            // 資料夾不存在，建立資料夾
+            boolean created = folder.mkdirs();
+            if (created) {
+                System.out.println("資料夾已成功建立");
+            } else {
+                System.out.println("無法建立資料夾");
+            }
+        } else {
+            System.out.println("資料夾已存在");
+        }
+		//將要指定傳送的圖片儲存
+		int counter = 1;
+        for (MultipartFile file : files) {
+            try {
+                // 儲存每張圖片到伺服器
+//                File uploadedFile = new File("/uploadPict" + File.separator + file.getOriginalFilename());
+//            	File uploadedFile = new File("C:\\workspace\\Security_Probe\\target\\uploadPict" + File.separator + String.valueOf(counter) + ".jpg");
+            	File uploadedFile = new File("/uploadPict" + File.separator + String.valueOf(counter) + ".jpg");
+            	log.info("uploadedFile.getAbsolutePath():" + uploadedFile.getAbsolutePath());
+            	counter++;
+                FileOutputStream fos = new FileOutputStream(uploadedFile);
+                fos.write(file.getBytes());
+                fos.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+                return ResponseEntity.badRequest().body("檔案上傳失敗");
+            }
+        }
+        
+        return ResponseEntity.ok("檔案上傳成功");
+    }
 	
 
 	private byte chooseLastHead(String fileName) {

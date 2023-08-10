@@ -2,6 +2,7 @@ package oam.security.model.resource.security;
 
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -68,54 +69,105 @@ public class SecurityProbeService {
 	public ArrayNode sendPicture(Socket socket) throws Exception{
 		log.info("準備傳送!!!");
 		ArrayNode send = objectMapper.createArrayNode();  //存放 傳送圖片的log
-        String imagesDirectory = ansFolder; // 要傳送的圖片目錄
-        File imagesFolder = new File(imagesDirectory);
-        File[] imageFiles = imagesFolder.listFiles();
-		// 建立輸出串流，用於發送圖片到DN
-        OutputStream imageOutputStream = socket.getOutputStream();
-        
-        for (File imageFile : imageFiles) {
-        	ObjectNode sendLog = objectMapper.createObjectNode();
-        	System.out.println("\n傳送" + imagesDirectory + imageFile.getName());
-        	sendLog.put("FileName", imageFile.getName());
-        	//這是每一張圖片的串流
-        	InputStream inputStreamImage = new FileInputStream(imagesDirectory + imageFile.getName());
-        	 // 建立緩衝區
-            byte[] buffer = new byte[1];
-            int bytesRead;
-            //發送標頭檔
-		    for(int i = 0; i < head.length; i++) {
-		    	if(i == head.length - 1) {
-		    		//最後一個標頭檔依據檔名決定
-		    		System.out.println("head[i]:" + chooseLastHead(imageFile.getName()));
-		    		imageOutputStream.write(chooseLastHead(imageFile.getName()));
-		    	}else {
-		    		System.out.println("head[i]:" + head[i]);
-		    		imageOutputStream.write(head[i]);
-		    	}
-		    }
-		    sendLog.put("FileSize", imageFile.length() + " Bytes");
-		    sendLog.put("StartTime", getNowTime());
-            // 發送圖片
-            while ((bytesRead = inputStreamImage.read(buffer)) != -1) {
-//            	System.out.print(bytesRead + ", ");
-                imageOutputStream.write(buffer, 0, bytesRead);
+		//先檢查使用者有沒有先指定圖片
+//		String folderPath = "C:\\workspace\\Security_Probe\\target\\uploadPict";
+		String folderPath = "/uploadPict";
+		// 建立 File 物件
+        File folder = new File(folderPath);
+        String imagesDirectory = "";
+        if(folder.exists()) {
+//        	imagesDirectory = "C:\\workspace\\Security_Probe\\target\\uploadPict"; // 要傳送的圖片目錄
+        	imagesDirectory = "/uploadPict";
+        	//有指定圖片 要傳送
+        	File imagesFolder = new File(imagesDirectory);
+            File[] imageFiles = imagesFolder.listFiles();
+    		// 建立輸出串流，用於發送圖片到DN
+            OutputStream imageOutputStream = socket.getOutputStream();
+            // 寫入圖片數量到伺服器端
+            DataOutputStream dataOutputStream = new DataOutputStream(imageOutputStream);
+            dataOutputStream.writeInt(imageFiles.length);
+            dataOutputStream.flush();
+            //傳送圖片資料
+            for (File imageFile : imageFiles) {
+            	ObjectNode sendLog = objectMapper.createObjectNode();
+            	System.out.println("\n傳送" + imagesDirectory + imageFile.getName());
+            	sendLog.put("FileName", imageFile.getName());
+            	
+	            FileInputStream fileInputStream = new FileInputStream(imageFile);
+	            byte[] buffer = new byte[4096];
+                int bytesRead;
+	            
+    		    sendLog.put("FileSize", imageFile.length() + " Bytes");
+    		    sendLog.put("StartTime", getNowTime());
+                // 發送圖片
+    		    while ((bytesRead = fileInputStream.read(buffer)) != -1) {
+    		    	imageOutputStream.write(buffer, 0, bytesRead);
+                }
+
+                //剛剛沒傳送完的傳送出去
+                imageOutputStream.flush();
+                sendLog.put("EndTime", getNowTime());
+                //關閉要讀出單張圖片的串流
+                fileInputStream.close();
+                send.add(sendLog);
             }
-            //剛剛沒傳送完的傳送出去
+            
             imageOutputStream.flush();
-            sendLog.put("EndTime", getNowTime());
-            //關閉要讀出單張圖片的串流
-            inputStreamImage.close();
-            send.add(sendLog);
+            
+            System.out.println("圖片發送完成");
+        }else {
+        	//如果資料夾不存在 就表示用預設的操作
+        	imagesDirectory = ansFolder; // 要傳送的圖片目錄
+        	File imagesFolder = new File(imagesDirectory);
+            File[] imageFiles = imagesFolder.listFiles();
+    		// 建立輸出串流，用於發送圖片到DN
+            OutputStream imageOutputStream = socket.getOutputStream();
+            
+            for (File imageFile : imageFiles) {
+            	ObjectNode sendLog = objectMapper.createObjectNode();
+            	System.out.println("\n傳送" + imagesDirectory + imageFile.getName());
+            	sendLog.put("FileName", imageFile.getName());
+            	//這是每一張圖片的串流
+            	InputStream inputStreamImage = new FileInputStream(imagesDirectory + imageFile.getName());
+            	 // 建立緩衝區
+                byte[] buffer = new byte[1];
+                int bytesRead;
+                //發送標頭檔
+    		    for(int i = 0; i < head.length; i++) {
+    		    	if(i == head.length - 1) {
+    		    		//最後一個標頭檔依據檔名決定
+    		    		System.out.println("head[i]:" + chooseLastHead(imageFile.getName()));
+    		    		imageOutputStream.write(chooseLastHead(imageFile.getName()));
+    		    	}else {
+    		    		System.out.println("head[i]:" + head[i]);
+    		    		imageOutputStream.write(head[i]);
+    		    	}
+    		    }
+    		    sendLog.put("FileSize", imageFile.length() + " Bytes");
+    		    sendLog.put("StartTime", getNowTime());
+                // 發送圖片
+                while ((bytesRead = inputStreamImage.read(buffer)) != -1) {
+//                	System.out.print(bytesRead + ", ");
+                    imageOutputStream.write(buffer, 0, bytesRead);
+                }
+                //剛剛沒傳送完的傳送出去
+                imageOutputStream.flush();
+                sendLog.put("EndTime", getNowTime());
+                //關閉要讀出單張圖片的串流
+                inputStreamImage.close();
+                send.add(sendLog);
+            }
+            
+            imageOutputStream.write(head[0]);
+            imageOutputStream.write(head[1]);
+            imageOutputStream.write(head[2]);
+            imageOutputStream.write((byte)0x11);
+            imageOutputStream.flush();
+            
+            System.out.println("圖片發送完成");
         }
         
-        imageOutputStream.write(head[0]);
-        imageOutputStream.write(head[1]);
-        imageOutputStream.write(head[2]);
-        imageOutputStream.write((byte)0x11);
-        imageOutputStream.flush();
         
-        System.out.println("圖片發送完成");
         // 關閉輸出串流和Socket連接
 //        imageOutputStream.close();  //這裡關了會有問題
         return send;
