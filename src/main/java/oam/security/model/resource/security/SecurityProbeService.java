@@ -70,35 +70,34 @@ public class SecurityProbeService {
 		log.info("準備傳送!!!");
 		ArrayNode send = objectMapper.createArrayNode();  //存放 傳送圖片的log
 		//先檢查使用者有沒有先指定圖片
-//		String folderPath = "C:\\workspace\\Security_Probe\\target\\uploadPict";
-		String folderPath = "/uploadPict";
+		String folderPath = "C:\\workspace\\Security_Probe\\target\\uploadPict";
+//		String folderPath = "/uploadPict";
 		// 建立 File 物件
         File folder = new File(folderPath);
         String imagesDirectory = "";
         if(folder.exists()) {
-//        	imagesDirectory = "C:\\workspace\\Security_Probe\\target\\uploadPict"; // 要傳送的圖片目錄
-        	imagesDirectory = "/uploadPict";
+        	imagesDirectory = "C:\\workspace\\Security_Probe\\target\\uploadPict"; // 要傳送的圖片目錄
+//        	imagesDirectory = "/uploadPict";
         	//有指定圖片 要傳送
         	File imagesFolder = new File(imagesDirectory);
             File[] imageFiles = imagesFolder.listFiles();
     		// 建立輸出串流，用於發送圖片到DN
             OutputStream imageOutputStream = socket.getOutputStream();
-            // 寫入圖片數量到伺服器端
-            DataOutputStream dataOutputStream = new DataOutputStream(imageOutputStream);
-            dataOutputStream.writeInt(imageFiles.length);
-            dataOutputStream.flush();
             //傳送圖片資料
             for (File imageFile : imageFiles) {
             	ObjectNode sendLog = objectMapper.createObjectNode();
-            	System.out.println("\n傳送" + imagesDirectory + imageFile.getName());
+            	String sendFileName = imagesDirectory + File.separator + imageFile.getName();
+            	System.out.println("\n傳送" + sendFileName);
             	sendLog.put("FileName", imageFile.getName());
             	
-	            FileInputStream fileInputStream = new FileInputStream(imageFile);
-	            byte[] buffer = new byte[4096];
+	            FileInputStream fileInputStream = new FileInputStream(sendFileName);
+	            byte[] buffer = new byte[1];
                 int bytesRead;
 	            
     		    sendLog.put("FileSize", imageFile.length() + " Bytes");
     		    sendLog.put("StartTime", getNowTime());
+    		    //發送標頭檔
+    		    imageOutputStream.write(head);
                 // 發送圖片
     		    while ((bytesRead = fileInputStream.read(buffer)) != -1) {
     		    	imageOutputStream.write(buffer, 0, bytesRead);
@@ -109,9 +108,14 @@ public class SecurityProbeService {
                 sendLog.put("EndTime", getNowTime());
                 //關閉要讀出單張圖片的串流
                 fileInputStream.close();
+                log.info("關閉 " + sendFileName + " 串流");
                 send.add(sendLog);
             }
-            
+          //發送結束標頭
+		    imageOutputStream.write(head[0]);
+            imageOutputStream.write(head[1]);
+            imageOutputStream.write(head[2]);
+            imageOutputStream.write((byte)0x11);
             imageOutputStream.flush();
             
             System.out.println("圖片發送完成");

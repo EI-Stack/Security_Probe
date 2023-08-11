@@ -94,8 +94,8 @@ public class SecurityProbeController {
 	private JsonNode transferImage(@RequestBody JsonNode iperf) throws Exception {
 		//與DN端建立socket
 		//先找出自己的網卡IP
-		String ueIp = securityProbeService.getUeransimProbeIp();//(上214及正式環境用)
-        InetAddress inetAddress = InetAddress.getByName(ueIp);
+//		String ueIp = securityProbeService.getUeransimProbeIp();//(上214及正式環境用)
+//        InetAddress inetAddress = InetAddress.getByName(ueIp);
         int socketPort = iperf.get("socketPort").asInt();
         log.info("DN socket nodeport:" + String.valueOf(socketPort));
         String probe_id = iperf.get("probe_id").asText();
@@ -103,15 +103,15 @@ public class SecurityProbeController {
         //找出server
 //        String iperfTimeStamp = content.get("iperf3").get("timestamp").asText();
 //        String serverAddress = dn_service + "-" + iperfTimeStamp; // DN的server(正式用)
-        String serverAddress = dn_service; // DN的server(單純上214測試用)
-//        String serverAddress = "localhost"; // DN的server(本機測試用)
+//        String serverAddress = dn_service; // DN的server(單純上214測試用)
+        String serverAddress = "localhost"; // DN的server(本機測試用)
         
         //進行socket連線
         //serverAddress 是由外部指定，socketNodePort是管理程式傳過來的(因為是管理程式決定nodePort的)
         log.info("serverAddress:" + serverAddress + "  socketPort:" + String.valueOf(socketPort));
-        log.info("inetAddress:" + inetAddress.toString());
-        Socket socket = new Socket(serverAddress, socketPort, inetAddress, 0);//(單純上214測試用)
-//        Socket socket = new Socket(serverAddress, 8888);//(本機測試用)
+//        log.info("inetAddress:" + inetAddress.toString());
+//        Socket socket = new Socket(serverAddress, socketPort, inetAddress, 0);//(單純上214測試用)
+        Socket socket = new Socket(serverAddress, 8888);//(本機測試用)
         System.out.println("Connected to server on " + socket.getRemoteSocketAddress());
         
         ObjectNode result = objectMapper.createObjectNode();
@@ -132,10 +132,11 @@ public class SecurityProbeController {
         ((ObjectNode)compareResult).put("probe_id", probe_id);
         receiveData.set("receive_compare", compareResult);
         //通知管理程式檢查圖片的結果
-        securityProbeService.notifyManagerImageComapreResult(compareResult);
+//        securityProbeService.notifyManagerImageComapreResult(compareResult);
         
         result.set("receive", receiveData);
         result.set("send", sendData);
+        socket.close();
         
         return result;
 	}
