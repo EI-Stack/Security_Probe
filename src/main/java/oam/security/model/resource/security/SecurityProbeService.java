@@ -178,8 +178,8 @@ public class SecurityProbeService {
 	}
 	
 	public ArrayNode reveicePicture(Socket socket) throws Exception {
-		InputStream inputStream = socket.getInputStream();
 		//先建立資料夾 如果資料夾存在就清空receive資料夾
+		InputStream inputStream = socket.getInputStream();
 		File receivedirectory = new File(receiveFolder);
 		if (!receivedirectory.exists()) {
             // 資料夾不存在，建立資料夾
@@ -195,93 +195,198 @@ public class SecurityProbeService {
 		FileUtils.cleanDirectory(receivedirectory);
 		ArrayNode receive = objectMapper.createArrayNode();  //存放 接收圖片的log
 		
-		//計算現在是哪一張圖片
-        int countPicture = 0;
-         // 接收圖片的緩衝區
-        byte []buffer = new byte[1];
-        byte []imageTmp = new byte[4];
-        //計算現在是要檢查head的哪一個
-        int countHead = 0;
-        //是否為圖片資料
-        boolean isImageData = false;
-        // 建立輸出串流，儲存客戶端傳來的圖片 這是每一張圖片的串流
+		//先檢查使用者有沒有先指定圖片
+		String folderPath = "C:\\workspace\\Security_Probe\\target\\uploadPict";
+//		String folderPath = "/uploadPict";
+		// 建立 File 物件
+        File folder = new File(folderPath);
+        String imagesDirectory = "";
         OutputStream outputStream = null;
-        String fileName = "";
-//        outputStream = new FileOutputStream("image" + String.valueOf(countPicture) + ".jpg");
-        // 接收圖片數據
-        int bytesRead;
-        ObjectNode fileLog = null;
-        while ((bytesRead = inputStream.read(buffer)) != -1) {
-//        	System.out.print(bytesRead+",");        	
-        	if(countHead == 3) { //準備比序號3 (第四個)
-        		if(compareLastHead(buffer[0])) { //有比對成功(10張圖片的標頭)
-        			System.out.println("header比對完畢 開啟下一張圖片串流");
-        			if(outputStream != null && fileLog != null) {
-        				//關閉剛剛的圖片串流
-        				outputStream.close();
-        				fileLog.put("EndTime", getNowTime());  //紀錄傳送結束時間
+        
+        if(folder.exists()) {
+        	//如果有指定要另外寫接收
+        	String receiveFolder = "C:\\workspace\\Security_Probe\\target\\receive";
+//        	String receiveFolder = "/receive";
+        	// 建立 File 物件
+            File folderReceive = new File(receiveFolder);
+            if(!folderReceive.exists()) {
+            	boolean created = folderReceive.mkdirs();
+                if (created) {
+                    System.out.println("使用者指定圖片 接收資料夾" + receiveFolder + "已成功建立");
+                } else {
+                    System.out.println("無法建立資料夾" + receiveFolder);
+                }
+            }else {
+            	log.info("使用者指定圖片 接收資料夾 " + receiveFolder + "已存在");
+            }
+            // 接收圖片數據
+            int bytesRead;
+            byte []buffer = new byte[1];
+            byte []imageTmp = new byte[4];
+            ObjectNode fileLog = null;
+            //計算現在是哪一張圖片
+            int countPicture = 1;
+            String fileName = "";
+            //計算現在是要檢查head的哪一個
+            int countHead = 0;
+            //是否為圖片資料
+            boolean isImageData = false;
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+            	if(countHead == 3) { //準備比序號3 (第四個)
+            		if(comparelastHead(buffer[0])) { //有比對成功(圖片的標頭)
+            			System.out.println("header比對完畢 開啟下一張圖片串流");
+            			if(outputStream != null && fileLog != null) {
+            				//關閉剛剛的圖片串流
+            				outputStream.close();
+            				fileLog.put("EndTime", getNowTime());  //紀錄傳送結束時間
+            				receive.add(fileLog);
+            				fileLog = objectMapper.createObjectNode();//用一個新的
+            			}
+            			fileName = File.separator + String.valueOf(countPicture) + ".jpg";
+            			//標頭檔Index歸零
+        				countHead = 0;
+        				//暫存歸零
+        				imageTmp = new byte[4];
+        				//圖片Index +1
+        				countPicture++;
+        				//開啟新圖片的串流
+        				outputStream = new FileOutputStream(receiveFolder + fileName);
+        				System.out.println("開啟" + receiveFolder + fileName + " 圖片串流");
+        				if(fileLog == null) {
+        					fileLog = objectMapper.createObjectNode();
+        				}
+        				fileLog.put("FileName", fileName);
+        				fileLog.put("StartTime", getNowTime());//紀錄傳送開始時間
+        				isImageData = true;
+        				continue;  //跳出去 不要往下比 因為這個還是標頭不能寫入圖片檔案
+            		}else if(buffer[0] == (byte)0x11){  //如果前三個都對 最後一個是0x11就代表全部結束
+            			System.out.println("Client...收到結束標記");
+            			isImageData = false;
+            			//關閉串流
+//            	        inputStream.close();
+            	        fileLog.put("EndTime", getNowTime());  //紀錄傳送結束時間
         				receive.add(fileLog);
-        				fileLog = objectMapper.createObjectNode();//用一個新的
-        			}
-        			fileName = getFileNameByHead(buffer[0]);
-        			//標頭檔Index歸零
-    				countHead = 0;
-    				//暫存歸零
-    				imageTmp = new byte[4];
-    				//圖片Index +1
-    				countPicture++;
-    				//開啟新圖片的串流
-    				outputStream = new FileOutputStream(receiveFolder + fileName);
-    				System.out.println("開啟" + receiveFolder + fileName + " 圖片串流");
-    				if(fileLog == null) {
-    					fileLog = objectMapper.createObjectNode();
-    				}
-    				fileLog.put("FileName", fileName);
-    				fileLog.put("StartTime", getNowTime());//紀錄傳送開始時間
-    				isImageData = true;
-    				continue;  //跳出去 不要往下比 因為這個還是標頭不能寫入圖片檔案
-        		}else if(buffer[0] == (byte)0x11){  //如果前三個都對 最後一個是0x11就代表全部結束
-        			System.out.println("Client...收到結束標記");
-        			isImageData = false;
-        			//關閉串流
-        	        inputStream.close();
-        	        fileLog.put("EndTime", getNowTime());  //紀錄傳送結束時間
-    				receive.add(fileLog);
-        	        socket.close();
-        			break;
-        		}
-        	}else if(buffer[0] == head[countHead]) {  //直接寫死第0個 因為也只會有一個
-//        		System.out.println("bytesRead:" + bytesRead+" 比對到header" + String.valueOf(countHead));
-        		if(countHead == 0) {
-//        			System.out.println("用新的imageTmp");
-        			imageTmp = new byte[4];
-        		}
-        		imageTmp[countHead] = buffer[0];
-        		isImageData = false;
-        		countHead++;//已經比對完成幾個
-        	}else {
-	    		//歸零 下次從第一個開始看 (表示圖片本來就是這個資料)
-	    		if(countHead != 0) {
-	    			countHead = 0;
-		    		isImageData = true;
-		    		for(int i = 0; i < imageTmp.length; i++) {
-		    			if(imageTmp[i] != 0) {  //剛剛懷疑為標頭檔的資料要寫回來(因為知道標頭檔是甚麼 可以直接寫 !=0)
-//		    				System.out.print("寫回標頭檔資料"+imageTmp[i]+",");
-		    				outputStream.write(imageTmp[i]);//如果這裡出現null就是串流最一開始的標頭檔案有問題
-		    			}
-		    		}
-		    		imageTmp = new byte[4];
-	    		}
-        	}
-        	
-			if(isImageData) {
-				//寫入圖片
-//				System.out.print(bytesRead+",");
-	    		outputStream.write(buffer, 0, bytesRead);
-			}
-//        	outputStream.write(bytesRead);//這行是for沒有標頭檔時測試用
-//        	outputStream.write(buffer, 0, bytesRead);//這行是for沒有標頭檔時測試用
+//            	        socket.close();
+            			break;
+            		}
+            	}else if(buffer[0] == head[countHead]) {  //直接寫死第0個 因為也只會有一個
+            		if(countHead == 0) {
+            			imageTmp = new byte[4];
+            		}
+            		imageTmp[countHead] = buffer[0];
+            		isImageData = false;
+            		countHead++;//已經比對完成幾個
+            	}else {
+    	    		//歸零 下次從第一個開始看 (表示圖片本來就是這個資料)
+    	    		if(countHead != 0) {
+    	    			countHead = 0;
+    		    		isImageData = true;
+    		    		for(int i = 0; i < imageTmp.length; i++) {
+    		    			if(imageTmp[i] != 0) {  //剛剛懷疑為標頭檔的資料要寫回來(因為知道標頭檔是甚麼 可以直接寫 !=0)
+    		    				outputStream.write(imageTmp[i]);//如果這裡出現null就是串流最一開始的標頭檔案有問題
+    		    			}
+    		    		}
+    		    		imageTmp = new byte[4];
+    	    		}
+            	}
+            	
+    			if(isImageData) {
+    				//寫入圖片
+//    				System.out.print(bytesRead+",");
+    	    		outputStream.write(buffer, 0, bytesRead);
+    			}
+            }
+        }else {
+
+        	//計算現在是哪一張圖片
+        	int countPicture = 0;
+             // 接收圖片的緩衝區
+            byte []buffer = new byte[1];
+            byte []imageTmp = new byte[4];
+            //計算現在是要檢查head的哪一個
+            int countHead = 0;
+            //是否為圖片資料
+            boolean isImageData = false;
+            // 建立輸出串流，儲存客戶端傳來的圖片 這是每一張圖片的串流
+            
+            String fileName = "";
+//            outputStream = new FileOutputStream("image" + String.valueOf(countPicture) + ".jpg");
+            // 接收圖片數據
+            int bytesRead;
+            ObjectNode fileLog = null;
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+//            	System.out.print(bytesRead+",");        	
+            	if(countHead == 3) { //準備比序號3 (第四個)
+            		if(compareLastHead(buffer[0])) { //有比對成功(10張圖片的標頭)
+            			System.out.println("header比對完畢 開啟下一張圖片串流");
+            			if(outputStream != null && fileLog != null) {
+            				//關閉剛剛的圖片串流
+            				outputStream.close();
+            				fileLog.put("EndTime", getNowTime());  //紀錄傳送結束時間
+            				receive.add(fileLog);
+            				fileLog = objectMapper.createObjectNode();//用一個新的
+            			}
+            			fileName = getFileNameByHead(buffer[0]);
+            			//標頭檔Index歸零
+        				countHead = 0;
+        				//暫存歸零
+        				imageTmp = new byte[4];
+        				//圖片Index +1
+        				countPicture++;
+        				//開啟新圖片的串流
+        				outputStream = new FileOutputStream(receiveFolder + fileName);
+        				System.out.println("開啟" + receiveFolder + fileName + " 圖片串流");
+        				if(fileLog == null) {
+        					fileLog = objectMapper.createObjectNode();
+        				}
+        				fileLog.put("FileName", fileName);
+        				fileLog.put("StartTime", getNowTime());//紀錄傳送開始時間
+        				isImageData = true;
+        				continue;  //跳出去 不要往下比 因為這個還是標頭不能寫入圖片檔案
+            		}else if(buffer[0] == (byte)0x11){  //如果前三個都對 最後一個是0x11就代表全部結束
+            			System.out.println("Client...收到結束標記");
+            			isImageData = false;
+            			//關閉串流
+            	        inputStream.close();
+            	        fileLog.put("EndTime", getNowTime());  //紀錄傳送結束時間
+        				receive.add(fileLog);
+            	        socket.close();
+            			break;
+            		}
+            	}else if(buffer[0] == head[countHead]) {  //直接寫死第0個 因為也只會有一個
+//            		System.out.println("bytesRead:" + bytesRead+" 比對到header" + String.valueOf(countHead));
+            		if(countHead == 0) {
+//            			System.out.println("用新的imageTmp");
+            			imageTmp = new byte[4];
+            		}
+            		imageTmp[countHead] = buffer[0];
+            		isImageData = false;
+            		countHead++;//已經比對完成幾個
+            	}else {
+    	    		//歸零 下次從第一個開始看 (表示圖片本來就是這個資料)
+    	    		if(countHead != 0) {
+    	    			countHead = 0;
+    		    		isImageData = true;
+    		    		for(int i = 0; i < imageTmp.length; i++) {
+    		    			if(imageTmp[i] != 0) {  //剛剛懷疑為標頭檔的資料要寫回來(因為知道標頭檔是甚麼 可以直接寫 !=0)
+//    		    				System.out.print("寫回標頭檔資料"+imageTmp[i]+",");
+    		    				outputStream.write(imageTmp[i]);//如果這裡出現null就是串流最一開始的標頭檔案有問題
+    		    			}
+    		    		}
+    		    		imageTmp = new byte[4];
+    	    		}
+            	}
+            	
+    			if(isImageData) {
+    				//寫入圖片
+//    				System.out.print(bytesRead+",");
+    	    		outputStream.write(buffer, 0, bytesRead);
+    			}
+//            	outputStream.write(bytesRead);//這行是for沒有標頭檔時測試用
+//            	outputStream.write(buffer, 0, bytesRead);//這行是for沒有標頭檔時測試用
+            }
         }
+		
         outputStream.close();
         System.out.println("圖片接收完成");
         return receive;
@@ -518,6 +623,13 @@ public class SecurityProbeService {
 				break;
 		}
 		return lastHead;
+	}
+	
+	private boolean comparelastHead(byte input) {
+		if(input == head[3]) {
+			return true;
+		}
+		return false;
 	}
 
 }
