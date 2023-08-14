@@ -70,14 +70,14 @@ public class SecurityProbeService {
 		log.info("準備傳送!!!");
 		ArrayNode send = objectMapper.createArrayNode();  //存放 傳送圖片的log
 		//先檢查使用者有沒有先指定圖片
-		String folderPath = "C:\\workspace\\Security_Probe\\target\\uploadPict";
-//		String folderPath = "/uploadPict";
+//		String folderPath = "C:\\workspace\\Security_Probe\\target\\uploadPict";
+		String folderPath = "/uploadPict";
 		// 建立 File 物件
         File folder = new File(folderPath);
         String imagesDirectory = "";
         if(folder.exists()) {
-        	imagesDirectory = "C:\\workspace\\Security_Probe\\target\\uploadPict"; // 要傳送的圖片目錄
-//        	imagesDirectory = "/uploadPict";
+//        	imagesDirectory = "C:\\workspace\\Security_Probe\\target\\uploadPict"; // 要傳送的圖片目錄
+        	imagesDirectory = "/uploadPict";
         	//有指定圖片 要傳送
         	File imagesFolder = new File(imagesDirectory);
             File[] imageFiles = imagesFolder.listFiles();
@@ -196,8 +196,8 @@ public class SecurityProbeService {
 		ArrayNode receive = objectMapper.createArrayNode();  //存放 接收圖片的log
 		
 		//先檢查使用者有沒有先指定圖片
-		String folderPath = "C:\\workspace\\Security_Probe\\target\\uploadPict";
-//		String folderPath = "/uploadPict";
+//		String folderPath = "C:\\workspace\\Security_Probe\\target\\uploadPict";
+		String folderPath = "/uploadPict";
 		// 建立 File 物件
         File folder = new File(folderPath);
         String imagesDirectory = "";
@@ -205,8 +205,8 @@ public class SecurityProbeService {
         
         if(folder.exists()) {
         	//如果有指定要另外寫接收
-        	String receiveFolder = "C:\\workspace\\Security_Probe\\target\\receive";
-//        	String receiveFolder = "/receive";
+//        	String receiveFolder = "C:\\workspace\\Security_Probe\\target\\receive";
+        	String receiveFolder = "/receive";
         	// 建立 File 物件
             File folderReceive = new File(receiveFolder);
             if(!folderReceive.exists()) {
@@ -393,61 +393,118 @@ public class SecurityProbeService {
 	}
 	
 	public JsonNode checkImage() throws Exception {
-		String ansDirectory = ansFolder; // 正確答案圖片目錄
-        File ansFolder = new File(ansDirectory);
-        File[] ansFiles = ansFolder.listFiles();
-        String receiveDirectory = receiveFolder; // 接收到的圖片目錄
-        File receiveFolder = new File(receiveDirectory);
-        File[] receiveFiles = receiveFolder.listFiles();
-        boolean []haveCheckAns = new boolean[10];  //這裡要寫10張圖片 免得有圖片沒傳來也被說OK
         ObjectNode check = objectMapper.createObjectNode();
-        ArrayNode result = objectMapper.createArrayNode();
-        //先預設都沒有查過
-        System.out.println("預設為全部false");
-        for(int i = 0; i < haveCheckAns.length; i++) {
-        	haveCheckAns[i] = false;
-        	System.out.print(haveCheckAns[i] + ", ");
+		//先檢查使用者有沒有先指定圖片
+//		String folderPath = "C:\\workspace\\Security_Probe_DN\\target\\uploadPict";
+        String folderPath = "/uploadPict";
+		// 建立 File 物件
+        File folder = new File(folderPath);
+        if(folder.exists()) {
+        	 ArrayNode result = objectMapper.createArrayNode();
+         	//這邊表示使用者有指定傳送圖片
+         	File[] imageFiles = folder.listFiles();  //使用者指定的正確答案
+         	//收到的圖片
+//         	String receiveFolderPath = "C:\\workspace\\Security_Probe_DN\\target\\receive";
+         	String receiveFolderPath = "/receive";
+         	File receiveFolder = new File(receiveFolderPath);
+         	File[] imageFilesReceive = receiveFolder.listFiles();  //傳來的檔案
+         	check.put("Role", "ProbeDN");
+         	//拿傳來的檔案跟正確答案比
+         	for (File receiveFile : imageFilesReceive) {
+         		String receiveFileName = receiveFolder + "\\" + receiveFile.getName();
+         		log.info("Receive File Name:"+receiveFileName);
+             	BufferedImage receiveImage = ImageIO.read(new File(receiveFileName));
+             	ObjectNode compareResult = objectMapper.createObjectNode();//比對結果
+             	compareResult.put("FileName", receiveFileName);
+             	for(File correctFile: imageFiles) {
+             		boolean isEqual = true;
+             		String correctFileName = folder.getAbsolutePath() + "\\" + correctFile.getName();
+//             		log.info("Compare to correct file name:"+correctFileName);
+             		BufferedImage correctImage = ImageIO.read(new File(correctFileName));
+             		//進行比較
+             		if((correctImage.getWidth() != receiveImage.getWidth()) || 
+             			(correctImage.getHeight() != receiveImage.getHeight())) {//長寬不一樣就是先出局了
+             			isEqual = false;
+             		}else {
+             			for (int x = 0; x < correctImage.getWidth(); x++) {
+                 		    for (int y = 0; y < receiveImage.getHeight(); y++) {
+                 		        if (correctImage.getRGB(x, y) != receiveImage.getRGB(x, y)) {
+                 		        	//有一個點不一樣 就表示不是這張圖
+                 		        	isEqual = false;
+                 		            break;
+                 		        }
+                 		    }
+                 		}
+             		}
+             		if(isEqual) {  //一樣的話表示有找到 不用再往下比其他檔案
+                     	log.info("compare is " + isEqual);
+                     	compareResult.put("compare", isEqual);
+             			break;
+             		}
+             	}
+         		result.add(compareResult);
+         		check.set("content", result);
+         	}
+         	
+             System.out.println("\n比對結果");
+         	log.info("check:" + check.toPrettyString());
+        }else {
+        	String ansDirectory = ansFolder; // 正確答案圖片目錄
+            File ansFolder = new File(ansDirectory);
+            File[] ansFiles = ansFolder.listFiles();
+            String receiveDirectory = receiveFolder; // 接收到的圖片目錄
+            File receiveFolder = new File(receiveDirectory);
+            File[] receiveFiles = receiveFolder.listFiles();
+            boolean []haveCheckAns = new boolean[10];  //這裡要寫10張圖片 免得有圖片沒傳來也被說OK
+            ArrayNode result = objectMapper.createArrayNode();
+            //先預設都沒有查過
+            System.out.println("預設為全部false");
+            for(int i = 0; i < haveCheckAns.length; i++) {
+            	haveCheckAns[i] = false;
+            	System.out.print(haveCheckAns[i] + ", ");
+            }
+            
+            for (File receiveFile : receiveFiles) {  //拿收到的去跟正確答案比較
+            	String receiveFileName = receiveDirectory + receiveFile.getName();
+            	BufferedImage receiveImage = ImageIO.read(new File(receiveFileName));
+            	for(File ansFile : ansFiles) {
+            		if(ansFile.getName().equals(receiveFile.getName())) {//在and和receive資料夾 找相同檔名的進行比較
+            			String ansFileName = ansDirectory + ansFile.getName();
+            			BufferedImage ansImage = ImageIO.read(new File(ansFileName));
+                		boolean isEqual = true;
+                		//進行比較
+                		for (int x = 0; x < ansImage.getWidth(); x++) {
+                		    for (int y = 0; y < receiveImage.getHeight(); y++) {
+                		        if (ansImage.getRGB(x, y) != receiveImage.getRGB(x, y)) {
+                		        	//有一個點不一樣 就表示不是這張圖
+                		        	isEqual = false;
+                		            break;
+                		        }
+                		    }
+                		    if(isEqual) {
+                		    	int index = getImageFileNameIndex(receiveFile.getName());
+                		    	haveCheckAns[index] = true;
+                		    }else {
+                		    	break;
+                		    }
+                		}
+            		}
+            		
+            	}
+            }
+            //先預設都沒有查過
+            System.out.println("\n比對結果");
+            for(int i = 0; i < haveCheckAns.length; i++) {
+            	ObjectNode compareResult = objectMapper.createObjectNode();
+            	compareResult.put("compare", haveCheckAns[i]);
+            	compareResult.put("FileName", getImageFileNameIndex(i));
+            	result.add(compareResult);  //把檢測結果加入array
+            	System.out.print(haveCheckAns[i] + ", ");
+            }
+            check.put("Role", "Probe");
+            check.set("content", result);
         }
         
-        for (File receiveFile : receiveFiles) {  //拿收到的去跟正確答案比較
-        	String receiveFileName = receiveDirectory + receiveFile.getName();
-        	BufferedImage receiveImage = ImageIO.read(new File(receiveFileName));
-        	for(File ansFile : ansFiles) {
-        		if(ansFile.getName().equals(receiveFile.getName())) {//在and和receive資料夾 找相同檔名的進行比較
-        			String ansFileName = ansDirectory + ansFile.getName();
-        			BufferedImage ansImage = ImageIO.read(new File(ansFileName));
-            		boolean isEqual = true;
-            		//進行比較
-            		for (int x = 0; x < ansImage.getWidth(); x++) {
-            		    for (int y = 0; y < receiveImage.getHeight(); y++) {
-            		        if (ansImage.getRGB(x, y) != receiveImage.getRGB(x, y)) {
-            		        	//有一個點不一樣 就表示不是這張圖
-            		        	isEqual = false;
-            		            break;
-            		        }
-            		    }
-            		    if(isEqual) {
-            		    	int index = getImageFileNameIndex(receiveFile.getName());
-            		    	haveCheckAns[index] = true;
-            		    }else {
-            		    	break;
-            		    }
-            		}
-        		}
-        		
-        	}
-        }
-        //先預設都沒有查過
-        System.out.println("\n比對結果");
-        for(int i = 0; i < haveCheckAns.length; i++) {
-        	ObjectNode compareResult = objectMapper.createObjectNode();
-        	compareResult.put("compare", haveCheckAns[i]);
-        	compareResult.put("FileName", getImageFileNameIndex(i));
-        	result.add(compareResult);  //把檢測結果加入array
-        	System.out.print(haveCheckAns[i] + ", ");
-        }
-        check.put("Role", "Probe");
-        check.set("content", result);
         return check;
 	}
 	
