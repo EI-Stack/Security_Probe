@@ -15,7 +15,7 @@ public class CopyFileCommandLineRunner implements CommandLineRunner{
 	
 	String sourceAnsFolder = "ans/";
 	String copyFolderPath = "/uploadPict";
-	String needFileNames[] = {"Account.jpg", "Chest X-Ray.jpg", "missile.jpg", 
+	String needFileNames[] = {"Account.jpg", "ChestXRay.jpg", "missile.jpg", 
 			  "Panasonic.jpg", "Taiwan.jpg"};
 
 	@Override

@@ -408,18 +408,18 @@ public class SecurityProbeService {
          	String receiveFolderPath = "/receive";
          	File receiveFolder = new File(receiveFolderPath);
          	File[] imageFilesReceive = receiveFolder.listFiles();  //傳來的檔案
-         	check.put("Role", "ProbeDN");
+         	check.put("Role", "Probe");
          	//拿傳來的檔案跟正確答案比
          	for (File receiveFile : imageFilesReceive) {
-         		String receiveFileName = receiveFolder + "\\" + receiveFile.getName();
+         		String receiveFileName = receiveFolder + "/" + receiveFile.getName();
          		log.info("Receive File Name:"+receiveFileName);
              	BufferedImage receiveImage = ImageIO.read(new File(receiveFileName));
              	ObjectNode compareResult = objectMapper.createObjectNode();//比對結果
              	compareResult.put("FileName", receiveFileName);
              	for(File correctFile: imageFiles) {
              		boolean isEqual = true;
-             		String correctFileName = folder.getAbsolutePath() + "\\" + correctFile.getName();
-//             		log.info("Compare to correct file name:"+correctFileName);
+             		String correctFileName = folder.getAbsolutePath() + "/" + correctFile.getName();
+             		log.info("Compare to correct file name:"+correctFileName);
              		BufferedImage correctImage = ImageIO.read(new File(correctFileName));
              		//進行比較
              		if((correctImage.getWidth() != receiveImage.getWidth()) || 
@@ -446,7 +446,7 @@ public class SecurityProbeService {
          		check.set("content", result);
          	}
          	
-             System.out.println("\n比對結果");
+            System.out.println("\n比對結果");
          	log.info("check:" + check.toPrettyString());
         }else {
         	String ansDirectory = ansFolder; // 正確答案圖片目錄
