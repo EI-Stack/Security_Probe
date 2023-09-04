@@ -5,10 +5,12 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.stereotype.Component;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Component
 public class CopyFileCommandLineRunner implements CommandLineRunner{
 	
 	String sourceAnsFolder = "ans/";
