@@ -242,7 +242,21 @@ public class SecurityProbeService {
             				receive.add(fileLog);
             				fileLog = objectMapper.createObjectNode();//用一個新的
             			}
-            			fileName = File.separator + String.valueOf(countPicture) + ".jpg";
+            			String a = "";
+            			switch(countPicture) {
+            				case 1:
+            					a = "Account.jpg";
+            					break;
+            				case 2:
+            					a = "missile.jpg";
+            					break;
+            				case 3:
+            					a = "Taiwan.jpg";
+            					break;
+            				default:
+            					a = String.valueOf(countPicture)+".jpg";
+            			}
+            			fileName = File.separator + a;
             			//標頭檔Index歸零
         				countHead = 0;
         				//暫存歸零
